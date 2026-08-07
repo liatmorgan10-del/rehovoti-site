@@ -384,3 +384,133 @@ function EventRow({ events, isAdmin, onDelete, emptyText }) {
                 טוען אירועים...
               </p>
             ) : (
+placeholder="מחיר / הערה"
+              value={form.price}
+              onChange={(e) => setForm({ ...form, price: e.target.value })}
+              className="rounded-xl px-3 py-2 text-sm"
+              style={{ backgroundColor: COLORS.paper, color: COLORS.ink }}
+            />
+            <input
+              placeholder="שם הספק / אתר המכירה"
+              value={form.vendorName}
+              onChange={(e) => setForm({ ...form, vendorName: e.target.value })}
+              className="rounded-xl px-3 py-2 text-sm"
+              style={{ backgroundColor: COLORS.paper, color: COLORS.ink }}
+            />
+            <input
+              required
+              placeholder="קישור לרכישה (https://...)"
+              value={form.vendorUrl}
+              onChange={(e) => setForm({ ...form, vendorUrl: e.target.value })}
+              className="rounded-xl px-3 py-2 text-sm sm:col-span-2"
+              style={{ backgroundColor: COLORS.paper, color: COLORS.ink }}
+            />
+            <input
+              placeholder="קישור לתמונה/פלייר של האירוע (אופציונלי)"
+              value={form.imageUrl}
+              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+              className="rounded-xl px-3 py-2 text-sm sm:col-span-2"
+              style={{ backgroundColor: COLORS.paper, color: COLORS.ink }}
+            />
+            <label
+              className="flex items-center gap-2 text-sm sm:col-span-2"
+              style={{ color: COLORS.ink, opacity: 0.85 }}
+            >
+              <input
+                type="checkbox"
+                checked={form.agreedToTerms}
+                onChange={(e) => setForm({ ...form, agreedToTerms: e.target.checked })}
+              />
+              קראתי ואני מאשר/ת את{" "}
+              <button
+                type="button"
+                onClick={() => setShowTerms(true)}
+                className="underline"
+                style={{ color: COLORS.accent }}
+              >
+                תקנון האתר
+              </button>
+            </label>
+            <button
+              type="submit"
+              disabled={!form.agreedToTerms}
+              className="rounded-full px-4 py-2 text-sm font-semibold sm:col-span-2 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: COLORS.accent, color: COLORS.paper }}
+            >
+              פרסום האירוע
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="mx-auto mb-6 max-w-3xl px-4 sm:px-6">
+        <p className="mb-2 text-sm font-medium" style={{ color: COLORS.ink, opacity: 0.6, fontFamily: "Rubik, sans-serif" }}>
+          עיון לפי שכונה
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setCity("הכל")}
+            className="rounded-full px-3 py-1.5 text-sm font-medium transition-colors"
+            style={{
+              fontFamily: "Rubik, sans-serif",
+              backgroundColor: city === "הכל" ? COLORS.yellow : COLORS.inkLight,
+              color: COLORS.ink,
+            }}
+          >
+            כל השכונות · {events.length}
+          </button>
+          {cityBreakdown.map(({ city: c, count }) => (
+            <button
+              key={c}
+              onClick={() => setCity(c)}
+              className="rounded-full px-3 py-1.5 text-sm font-medium transition-colors"
+              style={{
+                fontFamily: "Rubik, sans-serif",
+                backgroundColor: city === c ? COLORS.yellow : COLORS.inkLight,
+                color: COLORS.ink,
+              }}
+            >
+              {c} · {count}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <footer className="mx-auto max-w-3xl px-4 pb-10 sm:px-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowTerms((s) => !s)}
+            className="text-sm underline"
+            style={{ color: COLORS.ink, opacity: 0.6, fontFamily: "Rubik, sans-serif" }}
+          >
+            תקנון האתר
+          </button>
+          <button
+            onClick={() => setIsAdmin((a) => !a)}
+            className="text-sm underline"
+            style={{ color: isAdmin ? "#B5651D" : COLORS.ink, opacity: isAdmin ? 1 : 0.6, fontFamily: "Rubik, sans-serif" }}
+          >
+            {isAdmin ? "מצב ניהול פעיל - כיבוי" : "מצב ניהול"}
+          </button>
+        </div>
+        {showTerms && (
+          <div
+            className="mt-3 flex flex-col gap-3 rounded-xl p-4"
+            style={{ backgroundColor: COLORS.inkLight, fontFamily: "Rubik, sans-serif" }}
+          >
+            {TERMS_SECTIONS.map((s) => (
+              <div key={s.title}>
+                <h4 className="mb-1 text-sm font-semibold" style={{ color: COLORS.ink }}>
+                  {s.title}
+                </h4>
+                <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.75 }}>
+                  {s.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </footer>
+    </div>
+  );
+  }
