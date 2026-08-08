@@ -383,7 +383,8 @@ function EventRow({ events, isAdmin, onDelete, emptyText }) {
               <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.5 }}>
                 טוען אירועים...
               </p>
-            ) : (
+        ) : (
+          <input
 placeholder="מחיר / הערה"
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
