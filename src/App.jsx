@@ -283,6 +283,48 @@ function EventCard({ ev, isAdmin, onDelete, onEdit }) {
   const month = dateObj.toLocaleDateString("he-IL", { month: "short" });
   const weekday = dateObj.toLocaleDateString("he-IL", { weekday: "short" });
 
+  function addToCalendar() {
+    const pad = (n) => String(n).padStart(2, "0");
+    const [y, m, d] = ev.date.split("-");
+    let startStr, endStr;
+    if (ev.time) {
+      const [hh, mm] = ev.time.split(":");
+      startStr = `${y}${m}${d}T${pad(hh)}${pad(mm)}00`;
+      const endDate = new Date(`${ev.date}T${ev.time}`);
+      endDate.setHours(endDate.getHours() + 2);
+      endStr = `${endDate.getFullYear()}${pad(endDate.getMonth() + 1)}${pad(endDate.getDate())}T${pad(
+        endDate.getHours()
+      )}${pad(endDate.getMinutes())}00`;
+    } else {
+      startStr = `${y}${m}${d}`;
+      const endDate = new Date(`${ev.date}T00:00:00`);
+      endDate.setDate(endDate.getDate() + 1);
+      endStr = `${endDate.getFullYear()}${pad(endDate.getMonth() + 1)}${pad(endDate.getDate())}`;
+    }
+    const dateLine = ev.time ? `DTSTART:${startStr}\nDTEND:${endStr}` : `DTSTART;VALUE=DATE:${startStr}\nDTEND;VALUE=DATE:${endStr}`;
+    const location = [ev.venue, ev.city].filter(Boolean).join(", ");
+    const ics = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "BEGIN:VEVENT",
+      dateLine,
+      `SUMMARY:${ev.title}`,
+      location ? `LOCATION:${location}` : "",
+      ev.description ? `DESCRIPTION:${ev.description.replace(/\n/g, "\\n")}` : "",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ]
+      .filter(Boolean)
+      .join("\r\n");
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${ev.title}.ics`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function shareEvent() {
     const dateLabel = dateObj.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" });
     const text = `${ev.title}\n📅 ${dateLabel}${ev.time ? ` בשעה ${ev.time}` : ""}\n📍 ${ev.city}${
@@ -445,6 +487,14 @@ function EventCard({ ev, isAdmin, onDelete, onEdit }) {
                 מחיקה
               </button>
             )}
+            <button
+              onClick={addToCalendar}
+              aria-label="הוספה ליומן"
+              className="flex items-center justify-center rounded-full p-2"
+              style={{ backgroundColor: COLORS.inkLight, color: COLORS.ink }}
+            >
+              <i className="ti ti-calendar-plus" style={{ fontSize: 16 }} aria-hidden="true"></i>
+            </button>
             <button
               onClick={shareEvent}
               aria-label="שיתוף האירוע"
@@ -1253,22 +1303,6 @@ export default function App() {
         >
           כל האירועים, הסדנאות והפעילויות של העיר - במקום אחד.
         </p>
-
-        {showAbout && (
-          <p
-            className="mx-auto mt-2 max-w-lg text-sm"
-            style={{ color: COLORS.ink, opacity: 0.7, fontFamily: "Rubik, sans-serif" }}
-          >
-            רחובותי נולד כדי לאחד את כל מה שקורה בעיר. מקום לחפש ולפרסם אירועים, חוגים, סדנאות ופעילויות בכל מיני קבוצות ופרסומים שונים, רחובותי מרכז עבור תושבי רחובות והסביבה את כל מה שמעניין במקום אחד.
-          </p>
-        )}
-        <button
-          onClick={() => setShowAbout((s) => !s)}
-          className="mt-1 text-xs underline"
-          style={{ color: COLORS.ink, opacity: 0.55, fontFamily: "Rubik, sans-serif" }}
-        >
-          {showAbout ? "הצג פחות" : "קרא עוד על רחובותי"}
-        </button>
 
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           <p
@@ -2294,29 +2328,40 @@ export default function App() {
         )}
         {showAbout && (
           <div
-            className="mt-3 flex flex-col gap-3 rounded-xl p-4"
-            style={{ backgroundColor: COLORS.inkLight, fontFamily: "Rubik, sans-serif" }}
+            className="fixed inset-0 z-50 overflow-y-auto"
+            style={{ backgroundColor: COLORS.pageBg, fontFamily: "Rubik, sans-serif" }}
           >
-            <h3 className="text-sm font-semibold" style={{ color: COLORS.ink }}>
-              על רחובותי
-            </h3>
-            <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.85 }}>
-              רחובותי עלה לאוויר באוגוסט 2026, מתוך רצון פשוט - שיהיה מקום אחד שבו כל מי שגר או מבקר ברחובות יוכל
-              למצוא בקלות מה קורה בעיר. לפני רחובותי, המידע על אירועים ופעילויות היה מפוזר בין עשרות קבוצות
-              וואטסאפ, עמודי פייסבוק ולוחות מודעות שכונתיים - וקל היה לפספס בדיוק את מה שחיפשתם.
-            </p>
-            <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.85 }}>
-              היום תמצאו כאן במקום אחד סדנאות, הרצאות, כנסים, קורסים ואירועים - מסודרים לפי שכונה ולפי תאריך, כדי
-              שתוכלו למצוא בדיוק מה שמתאים לכם, קרוב לבית.
-            </p>
-            <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.85 }}>
-              האתר מנוהל על ידי צוות רחובותי, ומתעדכן כל הזמן - כל מי שרוצה לפרסם אירוע מוזמן/ת, בחינם. החזון שלנו:
-              שרחובותי יהפוך למקום המרכזי לכל מה שקורה בעיר - הכתובת הראשונה שאליה פונים, גם תושבים וגם עסקים
-              מקומיים שרוצים להיות חלק מהקהילה.
-            </p>
-            <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.85 }}>
-              יש לכם שאלה, רעיון, או משהו שכדאי שנדע? נשמח לשמוע - דרך "יצירת קשר" בתחתית העמוד.
-            </p>
+            <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
+              <button
+                onClick={() => setShowAbout(false)}
+                className="mb-4 text-sm underline"
+                style={{ color: COLORS.ink, opacity: 0.7 }}
+              >
+                ← חזרה לאתר
+              </button>
+              <h2 className="mb-4 text-xl font-semibold" style={{ color: COLORS.ink, fontFamily: "Suez One, serif" }}>
+                על רחובותי
+              </h2>
+              <div className="flex flex-col gap-4">
+                <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.85 }}>
+                  רחובותי עלה לאוויר באוגוסט 2026, מתוך רצון פשוט - שיהיה מקום אחד שבו כל מי שגר או מבקר ברחובות יוכל
+                  למצוא בקלות מה קורה בעיר. לפני רחובותי, המידע על אירועים ופעילויות היה מפוזר בין עשרות קבוצות
+                  וואטסאפ, עמודי פייסבוק ולוחות מודעות שכונתיים - וקל היה לפספס בדיוק את מה שחיפשתם.
+                </p>
+                <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.85 }}>
+                  היום תמצאו כאן במקום אחד סדנאות, הרצאות, כנסים, קורסים ואירועים - מסודרים לפי שכונה ולפי תאריך, כדי
+                  שתוכלו למצוא בדיוק מה שמתאים לכם, קרוב לבית.
+                </p>
+                <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.85 }}>
+                  האתר מנוהל על ידי צוות רחובותי, ומתעדכן כל הזמן - כל מי שרוצה לפרסם אירוע מוזמן/ת, בחינם. החזון
+                  שלנו: שרחובותי יהפוך למקום המרכזי לכל מה שקורה בעיר - הכתובת הראשונה שאליה פונים, גם תושבים וגם
+                  עסקים מקומיים שרוצים להיות חלק מהקהילה.
+                </p>
+                <p className="text-sm" style={{ color: COLORS.ink, opacity: 0.85 }}>
+                  יש לכם שאלה, רעיון, או משהו שכדאי שנדע? נשמח לשמוע - דרך "יצירת קשר" בתחתית העמוד.
+                </p>
+              </div>
+            </div>
           </div>
         )}
         {showTerms && (
